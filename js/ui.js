@@ -278,7 +278,7 @@ export function renderRegistry(container, slug) {
       </section>
 
       <footer class="footer dim">
-        bday &mdash; a free, fast gift registry
+        bdayreg &mdash; a free, fast gift registry
       </footer>
     </div>
     ${countdown.isToday ? '<div class="confetti" aria-hidden="true"></div>' : ''}
