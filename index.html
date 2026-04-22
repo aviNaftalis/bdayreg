@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bdayreg — gift registry</title>
+<meta name="description" content="A free, fast, nerdy birthday gift registry. No accounts, no apps, just a link.">
+<meta property="og:title" content="bdayreg — gift registry">
+<meta property="og:description" content="A free, fast birthday gift registry. No accounts needed.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>">
+<link rel="modulepreload" href="js/app.js">
+<link rel="modulepreload" href="js/ui.js">
+<link rel="modulepreload" href="js/db.js">
+<link rel="modulepreload" href="js/ascii.js">
+<link rel="modulepreload" href="js/seed.js">
+<link rel="modulepreload" href="js/config.js">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--border:#30363d;--text:#e6edf3;
+  --dim:#7d8590;--green:#3fb950;--yellow:#d29922;--blue:#58a6ff;
+  --red:#f85149;--pink:#f778ba;
+}
+html{background:var(--bg);color:var(--text);font-family:"Berkeley Mono","JetBrains Mono","Fira Code","Cascadia Code","SF Mono","Consolas",monospace;font-size:15px;line-height:1.6}
+body{max-width:72ch;margin:0 auto;padding:1rem 1ch}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+.dim{color:var(--dim)}
+.error{color:var(--red);font-size:.85rem;margin-top:.5rem}
+
+.ascii-box{
+  border:1px solid var(--border);border-radius:4px;
+  padding:1rem 1.5ch;margin-bottom:1rem;
+  background:var(--bg2);
+}
+.hero{text-align:center;padding:2rem 1.5ch}
+.banner{color:var(--pink);font-size:.75rem;line-height:1.2;margin-bottom:1rem;display:inline-block;text-align:left}
+.tagline{font-size:1.1rem;margin-bottom:.25rem}
+.sub{color:var(--dim)}
+
+h1{font-size:1.3rem;margin-bottom:.5rem}
+h2{font-size:1.1rem;margin-bottom:.75rem;color:var(--dim)}
+h3{font-size:1rem;margin-bottom:.5rem;color:var(--dim)}
+ol,ul{padding-left:2ch;margin-bottom:1rem}
+li{margin-bottom:.25rem}
+
+.actions{display:flex;gap:1ch;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.registry-list{list-style:none;padding:0}
+.registry-list li{padding:.25rem 0}
+
+.btn{
+  background:var(--border);color:var(--text);border:1px solid var(--border);
+  padding:.4rem 1.2ch;border-radius:3px;cursor:pointer;font:inherit;font-size:.9rem;
+  transition:background .15s;
+}
+.btn:hover{background:#30363d;border-color:var(--dim)}
+.btn-primary{background:var(--green);color:var(--bg);border-color:var(--green);font-weight:600}
+.btn-primary:hover{background:#2ea043}
+.btn-secondary{background:transparent;border-color:var(--dim)}
+.btn-small{font-size:.8rem;padding:.25rem .8ch}
+.btn-unclaim{
+  background:none;border:none;color:var(--red);cursor:pointer;
+  font:inherit;font-size:.8rem;text-decoration:underline;
+}
+
+/* Create form */
+label{display:block;margin-bottom:.75rem;font-size:.9rem;color:var(--dim)}
+label input,label select{
+  display:block;width:100%;margin-top:.25rem;
+  background:var(--bg);color:var(--text);border:1px solid var(--border);
+  padding:.4rem .8ch;border-radius:3px;font:inherit;font-size:.9rem;
+}
+label input:focus,label select:focus{outline:none;border-color:var(--blue)}
+.token{display:block;background:var(--bg);padding:.75rem 1ch;margin:.5rem 0;font-size:1.2rem;letter-spacing:.15ch;border:1px dashed var(--yellow);border-radius:3px;text-align:center;color:var(--yellow);word-break:break-all}
+.success-box{border-color:var(--green)}
+
+/* Registry page */
+.registry-header .header-content{display:flex;gap:2ch;align-items:flex-start}
+.header-text{flex:1}
+.registry-photo{width:120px;height:120px;border-radius:6px;border:2px solid var(--border);object-fit:cover;flex-shrink:0}
+.countdown{font-size:1rem;margin-bottom:.25rem;color:var(--yellow)}
+.countdown.is-today{color:var(--pink);font-weight:700;font-size:1.1rem}
+.bday-date{color:var(--dim);font-size:.85rem;margin-bottom:.5rem}
+.registry-tagline{color:var(--dim);font-style:italic}
+.back-link{font-size:.85rem}
+
+.name-section{background:var(--bg)}
+.name-label{display:flex;align-items:center;gap:1ch;margin-bottom:0;color:var(--green);font-weight:600}
+.name-label input{flex:1;display:inline;width:auto;margin:0}
+
+.gifts-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.suggest-form{display:flex;flex-wrap:wrap;gap:.5ch;margin-bottom:1rem;padding:.75rem 0}
+.suggest-form input{flex:1;min-width:15ch}
+
+.gift-list{margin-top:.5rem}
+.gift-item{padding:.5rem 0}
+.gift-main{display:flex;align-items:baseline;gap:1ch;flex-wrap:wrap}
+.gift-checkbox{font-weight:700;flex-shrink:0}
+.status-claimed .gift-checkbox{color:var(--green)}
+.status-partial .gift-checkbox{color:var(--yellow)}
+.status-suggested .gift-checkbox{color:var(--dim)}
+.status-unclaimed .gift-checkbox{color:var(--dim)}
+.gift-name{font-weight:600}
+.status-claimed .gift-name{color:var(--green)}
+.gift-price{color:var(--dim);margin-left:auto;white-space:nowrap}
+.gift-link{display:block;font-size:.8rem;margin-top:.15rem}
+.gift-suggested{font-size:.8rem;margin-top:.15rem;font-style:italic}
+
+.gift-claims{margin-top:.35rem;padding-left:4ch;font-size:.85rem}
+.claim-item{margin-bottom:.2rem}
+.claim-name{color:var(--blue);font-weight:600}
+.claim-portion{color:var(--dim)}
+.claim-msg{color:var(--dim);font-style:italic}
+
+.gift-actions{margin-top:.35rem;display:flex;gap:1ch;padding-left:4ch}
+.btn-claim{border-color:var(--green);color:var(--green);background:transparent;font-size:.8rem;padding:.2rem .8ch}
+.btn-claim:hover{background:var(--green);color:var(--bg)}
+.btn-claim-partial{border-color:var(--yellow);color:var(--yellow);background:transparent;font-size:.8rem;padding:.2rem .8ch}
+.btn-claim-partial:hover{background:var(--yellow);color:var(--bg)}
+
+.claim-form{padding-left:4ch;margin-top:.35rem;display:flex;flex-wrap:wrap;gap:.5ch;align-items:center}
+.claim-form select,.claim-form input{font:inherit;font-size:.8rem;background:var(--bg);color:var(--text);border:1px solid var(--border);padding:.2rem .5ch;border-radius:3px;flex:1;min-width:10ch}
+.btn-confirm-partial{border-color:var(--yellow);color:var(--yellow);background:transparent}
+
+.admin-gift-actions{margin-top:.35rem;padding-left:4ch;display:flex;gap:1ch}
+.btn-approve{border-color:var(--green);color:var(--green);background:transparent}
+.btn-reject{border-color:var(--red);color:var(--red);background:transparent}
+.btn-delete-gift{border-color:var(--red);color:var(--red);background:transparent}
+
+.gift-divider{color:var(--border);margin:.25rem 0;user-select:none}
+.gift-item:last-of-type + .gift-divider{display:none}
+
+.admin-section{border-color:var(--border);opacity:.7;transition:opacity .2s}
+.admin-section:hover,.admin-section:focus-within{opacity:1}
+#admin-panel{margin-top:.75rem}
+#admin-tools{margin-top:.75rem}
+#admin-add-form{display:flex;flex-wrap:wrap;gap:.5ch}
+#admin-add-form input{flex:1;min-width:12ch}
+
+.example-badge{display:inline-block;font-size:.65rem;padding:.1rem .6ch;border:1px solid var(--yellow);color:var(--yellow);border-radius:3px;vertical-align:middle;margin-left:.5ch;font-weight:400;letter-spacing:.05ch}
+.examples-section{border-style:dashed;opacity:.8}
+
+.pin-gate{max-width:40ch;margin:0 auto}
+.pin-label{display:flex;align-items:center;gap:1ch;margin-bottom:.75rem;color:var(--yellow);font-weight:600}
+.pin-label input{flex:1;display:inline;width:auto;margin:0;font-size:1.2rem;letter-spacing:.3ch;text-align:center}
+
+.footer{text-align:center;padding:1rem 0;font-size:.8rem}
+
+/* Confetti for birthday-is-today */
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;overflow:hidden}
+.confetti::before,.confetti::after{
+  content:'🎉 🎂 🎈 🎁 ✨ 🎊';
+  position:absolute;top:-2rem;font-size:1.5rem;
+  animation:confetti-fall 4s ease-in forwards;
+  white-space:nowrap;
+}
+.confetti::before{left:10%;animation-delay:0s}
+.confetti::after{left:50%;animation-delay:.5s}
+@keyframes confetti-fall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+
+@media(max-width:480px){
+  body{font-size:13px;padding:0.5rem 0.5ch}
+  .banner{font-size:.55rem}
+  .registry-header .header-content{flex-direction:column-reverse;align-items:center;text-align:center}
+  .gift-actions,.claim-form,.gift-claims,.admin-gift-actions{padding-left:0}
+  .header-text{text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="landing">
+    <header class="ascii-box hero">
+      <pre class="banner" aria-label="BDAY">
+ _         _
+| |__   __| | __ _ _   _
+| '_ \ / _` |/ _` | | | |
+| |_) | (_| | (_| | |_| |
+|_.__/ \__,_|\__,_|\__, |
+                    |___/</pre>
+      <p class="tagline">A free, fast, nerdy birthday gift registry.</p>
+      <p class="sub">No accounts. No apps. Just a link.</p>
+    </header>
+    <section class="ascii-box">
+      <p class="dim">Loading...</p>
+    </section>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
